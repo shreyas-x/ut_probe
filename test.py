@@ -1,6 +1,8 @@
 import serial, time
 
 ser = serial.Serial("dev/ttyS11", 9600, timeout=5)
+probe_fixed_velocity = 6000 # in m/s
+carbon_steel_velocity = 5920 # in m/s
 
 try:
     data = ser.read_until(b"\x17")
@@ -19,13 +21,14 @@ try:
         rng = status & 0b00010000
 
         r = data[2:7]
-        r = [i.decode("utf-8") for i in r]
+        th_raw = int(r.decode('utf-8'))
+        th_raw *= carbon_steel_velocity / probe_fixed_velocity
         
         # if Hi-Res and Lo-Range
         if res != 0 and rng == 0:
-            value = f"{r[0]}{r[1]}.{r[2]}{r[3]} mm"
+            value = f"{th_raw/100:.2f} mm"
         else:
-            value = f"{r[0]}{r[1]}{r[2]}.{r[3]} mm"
+            value = f"{th_raw/10:.2f} mm"
 
         print(value)
 
